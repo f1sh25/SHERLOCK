@@ -1,17 +1,15 @@
-from autogen import ConversableAgent, LLMConfig
-from autogen.tools import Tool, Depends
-from autogen.tools.dependency_injection import on
-from typing import Annotated, Any, Optional, Union, Callable
-from pydantic import BaseModel, Field
-from rag_tool import EmbedTool, SearchTool, Database, Data
-from autogen.agentchat.group.patterns import AutoPattern
-from autogen.agentchat import initiate_group_chat
 import copy
+from typing import Annotated, Any, Callable, Optional, Union
 
-"""ist  a research pipeline for ag2 agents. when it gets a research task in terms of a question it will first get the subtasks (n. number)
-then it will be passed to research agent that first tries to get answer from vector database then if it deems that there is not enough information it will use the web agent to get the answer. 
-that uses web search if it still needs aditional information. if it needs more in depth information it will use websurfer agent to crawl pages. new information gathered from web will be stored in the vector database.
-once the research is deem to contain enough information to answer the question it will pass the information to the review agent that will check if the information is correct and if it is not it will ask the research agent to get more information"""
+from autogen import ConversableAgent, LLMConfig
+from autogen.agentchat import initiate_group_chat
+from autogen.agentchat.group.patterns import AutoPattern
+from autogen.tools import Depends, Tool
+from autogen.tools.dependency_injection import on
+from pydantic import BaseModel, Field
+
+from rag_tool import Data, Database, EmbedTool, SearchTool
+
 
 class Subquestion(BaseModel):
     question: Annotated[str, Field(description="The original question.")]
@@ -21,7 +19,8 @@ class Subquestion(BaseModel):
 
 
 class SubquestionAnswer(Subquestion):
-    answer: Annotated[str, Field(description="The answer to the question.")] = Field(default="No answer found")
+    answer: Annotated[str, Field(description="The answer to the question.")] = Field(
+        default="No answer found")
 
     def format(self) -> str:
         formatted_answer = self.answer if self.answer else "No answer found"
@@ -30,7 +29,8 @@ class SubquestionAnswer(Subquestion):
 
 class Task(BaseModel):
     question: Annotated[str, Field(description="The original question.")]
-    subquestions: Annotated[list[Subquestion], Field(description="The subquestions that need to be answered.")]
+    subquestions: Annotated[list[Subquestion], Field(
+        description="The subquestions that need to be answered.")]
 
     def format(self) -> str:
         return f"Task: {self.question}\n\n" + "\n".join(
@@ -41,15 +41,16 @@ class Task(BaseModel):
 
 class CompletedTask(BaseModel):
     question: Annotated[str, Field(description="The original question.")]
-    subquestions: Annotated[list[SubquestionAnswer], Field(description="The subquestions and their answers")]
+    subquestions: Annotated[list[SubquestionAnswer], Field(
+        description="The subquestions and their answers")]
 
     def format(self) -> str:
         formatted_output = [f"Task: {self.question}\n"]
-        
+
         for i, subquestion in enumerate(self.subquestions, 1):
             section = f"\nSubquestion {i}:\n{subquestion.format()}"
             formatted_output.append(section)
-            
+
         return "".join(formatted_output)
 
 
@@ -82,7 +83,7 @@ class ResearchTool(Tool):
     def __init__(self,
                  llm_config: Optional[Union[LLMConfig, dict[str, Any]]] = None,
                  max_web_steps: int = 30):
-        self.llm_config = llm_config 
+        self.llm_config = llm_config
 
         self.summarizer_agent = ConversableAgent(
             name="SummarizerAgent",
@@ -111,8 +112,6 @@ class ResearchTool(Tool):
             human_input_mode="NEVER",
         )
 
-
-
         def delegate_research_task(
             task: Annotated[str, "The task to perform a research on."],
             llm_config: Annotated[Union[LLMConfig, dict[str, Any]], Depends(on(llm_config))],
@@ -129,15 +128,11 @@ class ResearchTool(Tool):
                 str: The answer to the research task.
             """
 
-
-
             # Adds toolcall to critic that will be used to confirm the answer
             @self.summarizer_agent.register_for_execution()
             @self.critic_agent.register_for_llm(description="Call this method to confirm the final answer.")
-
             def confirm_summary(answer: str, reasoning: str) -> str:
                 return f"{self.ANSWER_CONFIRMED_PREFIX}" + answer + "\nReasoning: " + reasoning
-
 
             split_question_and_answer_subquestions = ResearchTool._get_split_question_and_answer_subquestions(
                 llm_config=llm_config,
@@ -148,7 +143,8 @@ class ResearchTool(Tool):
             self.summarizer_agent.register_for_llm(description="Split the question into subquestions and get answers.")(
                 split_question_and_answer_subquestions
             )
-            self.critic_agent.register_for_execution()(split_question_and_answer_subquestions)
+            self.critic_agent.register_for_execution()(
+                split_question_and_answer_subquestions)
 
             result = self.critic_agent.initiate_chat(
                 self.summarizer_agent,
@@ -158,11 +154,7 @@ class ResearchTool(Tool):
             )
 
             return result.summary
-            
 
-
-            
-        
         super().__init__(
             name="ResearchTool",
             description="A tool for conducting research and gathering information.",
@@ -197,7 +189,8 @@ class ResearchTool(Tool):
 
             example_task = Task(
                 question="What is the capital of France?",
-                subquestions=[Subquestion(question="What is the capital of France?")],
+                subquestions=[Subquestion(
+                    question="What is the capital of France?")],
             )
             decomposition_critic = ConversableAgent(
                 name="DecompositionCritic",
@@ -251,17 +244,16 @@ class ResearchTool(Tool):
 
             # Create a research bucket for this task
             research_bucket = ResearchBucket()
-            
+
             subquestions_answers: list[SubquestionAnswer] = []
             for subquestion in task.subquestions:
                 answer = ResearchTool._answer_question(
-                    subquestion.question, 
-                    llm_config=llm_config, 
+                    subquestion.question,
+                    llm_config=llm_config,
                     max_web_steps=max_web_steps,
                     bucket=research_bucket
                 )
 
-                
                 # Create a SubquestionAnswer with proper validation
                 answer_obj = SubquestionAnswer(
                     question=subquestion.question,
@@ -273,7 +265,8 @@ class ResearchTool(Tool):
             research_bucket.is_complete = True
             ResearchTool._embed_collected_information(research_bucket)
 
-            completed_task = CompletedTask(question=task.question, subquestions=subquestions_answers)
+            completed_task = CompletedTask(
+                question=task.question, subquestions=subquestions_answers)
             formatted_output = completed_task.format()
             # Only add prefix if we actually have answers
             if any(answer.answer != "No answer found" for answer in subquestions_answers):
@@ -306,7 +299,6 @@ class ResearchTool(Tool):
         def is_termination_msg(x: dict[str, Any]) -> bool:
             content = x.get("content", "")
             return (content is not None) and content.startswith(ResearchTool.ANSWER_CONFIRMED_PREFIX)
-
 
         websurfer_agent = WebSurferAgent(
             llm_config=llm_config,
@@ -401,7 +393,8 @@ class ResearchTool(Tool):
             )
             bucket.gathered_info.append(gathered_info)
 
-        answer = summary.replace(ResearchTool.ANSWER_CONFIRMED_PREFIX, "").strip()
+        answer = summary.replace(
+            ResearchTool.ANSWER_CONFIRMED_PREFIX, "").strip()
         if not answer or answer.isspace():
             answer = "No confirmed answer was found."
 
@@ -411,24 +404,21 @@ class ResearchTool(Tool):
     def _embed_collected_information(bucket: ResearchBucket) -> None:
         if not bucket.is_complete:
             return
-            
+
         # Create a single database connection for all embeddings
         TEST_DB = Database(
             type="postgres",
             host="localhost",
             port=5432,
-            user="spider",
-            password="spider",
-            db_name="spider"
+            user="postgres",
+            password="postgres",
+            db_name="postgres"
         )
-        
+
         embed_tool = EmbedTool(database=TEST_DB)
-        
+
         # Embed all collected information at once
         for info in bucket.gathered_info:
             if info and hasattr(info, '_collected_data'):
                 args, kwargs = info._collected_data
                 embed_tool(*args, **kwargs)
-
-
-

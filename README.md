@@ -1,59 +1,43 @@
-# Research Agent System
-
-A sophisticated multi-level research system that employs a cost-effective and efficient approach to information gathering and analysis.
-
-## Credits
-
-This research system builds upon the foundation laid by the DeepResearch tool from [ag2](https://github.com/ag2ai/ag2/blob/main/autogen/tools/experimental/deep_research/deep_research.py). While maintaining the core concept of progressive research depth, we've extended the functionality with a specialized focus on RAG-first approach and persistent memory features.
+This system is currently a **Proof of Concept (POC)** and is not intended for production use.
 
 ## Overview
 
-This system implements a tiered research strategy that progressively moves from fast, cheap lookups to more intensive web searches based on the information needs. The system includes:
+My system employs a tiered research strategy, progressively moving from rapid, low-cost lookups to more intensive web searches as needed. This approach prioritizes a **RAG-first (Retrieval Augmented Generation) strategy** and incorporates **persistent memory features**.
 
-1. **Vector Database (RAG) Search** - First Level
-   - Fastest and most cost-effective method
-   - Searches through previously embedded knowledge
-   - Uses PostgreSQL with vector extensions for semantic search
-   - Ideal for frequently accessed information
+### Research Levels
 
-2. **Web Search** - Second Level
-   - Activated when RAG search doesn't yield sufficient information
-   - Uses structured web searches to find relevant information
-   - More costly but provides broader information access
-   - Results are automatically embedded back into the vector database for future use
+1.  **Vector Database (RAG) Search - First Level:**
 
-3. **Deep Web Crawling** - Third Level
-   - Most intensive and thorough research method
-   - Activated when specific in-depth information is needed
-   - Crawls through related web pages to gather comprehensive information
-   - Includes smart memory features to store and relate information
+      * This is the fastest and most economical method.
+      * It searches through previously embedded knowledge stored in a PostgreSQL vector database, ideal for frequently accessed information.
+
+2.  **Web Search - Second Level:**
+
+      * Activated when the RAG search doesn't provide enough information.
+      * It performs structured web searches, offering broader information access at a higher cost.
+      * Results are automatically embedded into the vector database for future use.
+
+3.  **Deep Web Crawling - Third Level:**
+
+      * The most intensive and thorough research method, used for in-depth information needs.
+      * It crawls related web pages for comprehensive information.
+      * Includes smart memory features to store and relate information.
+
+-----
 
 ## Smart Memory Features
 
-- Automatic embedding of new information into the vector database
-- Progressive learning from web searches and crawls
-- Semantic chunking for optimal information storage
-- Metadata tracking for source attribution
+My system automatically embeds new information into the vector database, enabling progressive learning from web searches and crawls. It uses semantic chunking for optimal information storage and tracks metadata for source attribution.
+
+-----
 
 ## Components
 
-### ResearchAgent
+  * **ResearchAgent:** The main agent class that orchestrates the research process and manages progression through the different research levels.
+  * **ResearchTool:** Implements core research functionalities, including question decomposition, multi-agent coordination, progressive research strategy, and result synthesis.
+  * **Vector Database Tools:** Includes `EmbedTool` for document embedding and `SearchTool` for semantic search, supporting both PostgreSQL and LibSQL backends.
 
-The main agent class that coordinates the research process and manages the progression through different research levels.
-
-### ResearchTool
-
-Implements the core research functionality including:
-- Question decomposition
-- Multi-agent coordination
-- Progressive research strategy
-- Result synthesis
-
-### Vector Database Tools
-
-- `EmbedTool`: Handles document embedding into the vector database
-- `SearchTool`: Manages semantic search operations
-- Supports both PostgreSQL and LibSQL backends
+-----
 
 ## Usage
 
@@ -71,30 +55,19 @@ result = agent.run(
 )
 ```
 
+-----
+
 ## Configuration
 
 The system requires the following environment variables:
-- `OPENAI_API_KEY`: For embeddings and LLM operations
-- Database configuration (for PostgreSQL):
-  - host
-  - port
-  - user
-  - password
-  - database name
+
+  * `OPENAI_API_KEY`: For embeddings and LLM operations.
+  * **Database Configuration (for PostgreSQL):** `host`, `port`, `user`, `password`, `database name`.
+
+-----
 
 ## Benefits
 
-1. **Cost Optimization**
-   - Uses cheaper RAG searches before expensive web operations
-   - Stores results for future use
-   - Reduces redundant web searches
-
-2. **Progressive Research**
-   - Starts with simple solutions
-   - Escalates to more thorough methods only when needed
-   - Maintains context across research levels
-
-3. **Smart Memory Management**
-   - Automatically stores new information
-   - Improves future research efficiency
-   - Reduces duplicate research efforts
+  * **Cost Optimization:** Leverages cheaper RAG searches before more expensive web operations and stores results to reduce redundant searches.
+  * **Progressive Research:** Starts with simpler solutions and escalates to more thorough methods only when necessary, maintaining context across research levels.
+  * **Smart Memory Management:** Automatically stores new information, improving future research efficiency and reducing duplicate efforts.
