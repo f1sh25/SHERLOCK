@@ -23,13 +23,12 @@ My system employs a tiered research strategy, progressively moving from rapid, l
       * It crawls related web pages for comprehensive information.
       * Includes smart memory features to store and relate information.
 
------
+
 
 ## Smart Memory Features
 
 My system automatically embeds new information into the vector database, enabling progressive learning from web searches and crawls. It uses semantic chunking for optimal information storage and tracks metadata for source attribution.
 
------
 
 ## Components
 
@@ -37,7 +36,6 @@ My system automatically embeds new information into the vector database, enablin
   * **ResearchTool:** Implements core research functionalities, including question decomposition, multi-agent coordination, progressive research strategy, and result synthesis.
   * **Vector Database Tools:** Includes `EmbedTool` for document embedding and `SearchTool` for semantic search, supporting both PostgreSQL and LibSQL backends.
 
------
 
 ## Usage
 
@@ -55,7 +53,6 @@ result = agent.run(
 )
 ```
 
------
 
 ## Configuration
 
@@ -64,7 +61,6 @@ The system requires the following environment variables:
   * `OPENAI_API_KEY`: For embeddings and LLM operations.
   * **Database Configuration (for PostgreSQL):** `host`, `port`, `user`, `password`, `database name`.
 
------
 
 ## Benefits
 
